@@ -62,7 +62,7 @@
 
     function createSound(path, option = true) {
         sound = new Audio(path)
-        sound.volume = 0.1
+        sound.volume = 0.05
         if (option == true) return sound.play()
         return sound
     }
@@ -193,10 +193,6 @@
                 scoreEl.innerHTML = score
             }
             if (coin_y >= canvas.height - 45) {
-                if (score > bestScore) {
-                    bestScore = score
-                    bestScoreEl.innerHTML = bestScore
-                }
                 coinArray.splice(index, 1)
                 stopGame()
             }
@@ -211,6 +207,10 @@
         })
 
         function stopGame() {
+            if (score > bestScore) {
+                bestScore = score
+                bestScoreEl.innerHTML = bestScore
+            }
             scoreEl.innerHTML = score
             endScoreEl.innerHTML = score
             createSound('sounds/lose.mp3')
