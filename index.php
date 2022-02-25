@@ -18,9 +18,6 @@
 <body>
     <div class="fixed w-full p-3 flex justify-between">
         <div>
-            <audio loop id="musicEl">
-                <source src="tinhtam.mp3" type="audio/mpeg">
-            </audio>
             <div class="text-2xl font-bold text-red-500">
                 <span>Best Score: </span>
                 <span id="bestScoreEl">0</span>
@@ -57,14 +54,28 @@
         return Math.floor(Math.random() * (max - min + 1) + min)
     }
 
+    function createImage(path) {
+        let img = new Image()
+        img.src = path
+        return img
+    }
+
+    function createSound(path, option = true) {
+        sound = new Audio(path)
+        sound.volume = 0.1
+        if (option == true) return sound.play()
+        return sound
+    }
+
+    const bodyEl = document.querySelector('body')
     const startGameBtn = document.querySelector('#startGameBtn')
     const modalEl = document.querySelector('#modalEl')
     const scoreEl = document.querySelector('#scoreEl')
     const bestScoreEl = document.querySelector('#bestScoreEl')
     const endScoreEl = document.querySelector('#endScoreEl')
-    const musicEl = document.querySelector('#musicEl')
     const playerImage = 'images/hand.png'
-    const coinImage = 'images/btc.png'
+    const btcImage = 'images/btc.png'
+    const shitcoinImage = 'images/shitcoin.png'
 
     const canvas = document.querySelector('canvas')
     const c = canvas.getContext('2d')
@@ -119,32 +130,42 @@
                 this.dy = -this.dy * friction
             } else {
                 this.dy += gravity
-                if (this.dy > 6) this.dy -= 1
+                if (this.dy > 5) this.dy -= 1
             }
+            this.y += this.dy
+            this.draw()
+        }
+        initUpdate() {
+            if (this.dy > 5) this.dy -= 1
+            this.dy += gravity
             this.y += this.dy
             this.draw()
         }
     }
 
-    function createImage(path) {
-        let img = new Image()
-        img.src = path
-        return img
-    }
-
     var player = new Player(undefined, undefined, createImage(playerImage))
     var coinArray = []
+    var shitCoinArray = []
 
     function init() {
         player = new Player(undefined, undefined, createImage(playerImage))
         coinArray = []
+        shitCoinArray = []
     }
 
-    function spwanBall() {
+    function spwanCoin() {
         for (let i = 0; i < 10000; i++) {
             let x = randomIntFromRange(0, canvas.width - 40)
-            let y = randomIntFromRange(0, -1000000)
-            coinArray.push(new Coin(x, y, createImage(coinImage), 0.5))
+            let y = randomIntFromRange(0, -1500000)
+            coinArray.push(new Coin(x, y, createImage(btcImage), 0.5))
+        }
+    }
+
+    function spwanShitCoin() {
+        for (let i = 0; i < 750; i++) {
+            let x = randomIntFromRange(0, canvas.width - 40)
+            let y = randomIntFromRange(0, -1500000)
+            shitCoinArray.push(new Coin(x, y, createImage(shitcoinImage), 0.5))
         }
     }
 
@@ -158,40 +179,57 @@
         player.update()
         player.position.x = mouse.x - (player.width / 2)
         player.position.y = mouse.y - (player.height / 2)
+        var player_x = player.position.x
+        var player_y = player.position.y
+
         coinArray.forEach((coin, index) => {
-            coin.update()
-            let playerx = player.position.x
-            let playery = player.position.y
-            let coinx = coinArray[index].x
-            let coiny = coinArray[index].y
-            if (coinx > playerx && coinx < (playerx + player.width) && coiny > playery && coiny < (playery + player.height)) {
+            coin.initUpdate()
+            let coin_x = coinArray[index].x
+            let coin_y = coinArray[index].y
+            if (coin_x > player_x && coin_x < (player_x + player.width) && coin_y > player_y && coin_y < (player_y + player.height)) {
                 coinArray.splice(index, 1)
                 score += 1
+                createSound('sounds/tok.mp3')
                 scoreEl.innerHTML = score
             }
-            if (coiny >= canvas.height - 45) {
-                coinArray.splice(index, 1)
-                scoreEl.innerHTML = score
-                endScoreEl.innerHTML = score
+            if (coin_y >= canvas.height - 45) {
                 if (score > bestScore) {
                     bestScore = score
                     bestScoreEl.innerHTML = bestScore
                 }
-                cancelAnimationFrame(animationId)
-                modalEl.style.display = 'flex'
+                coinArray.splice(index, 1)
+                stopGame()
             }
         })
-    }
+        shitCoinArray.forEach((shitCoin, index) => {
+            shitCoin.initUpdate()
+            let sCoin_x = shitCoinArray[index].x
+            let sCoin_y = shitCoinArray[index].y
+            if (sCoin_x > player_x && sCoin_x < (player_x + player.width) && sCoin_y > player_y && sCoin_y < (player_y + player.height)) {
+                stopGame()
+            }
+        })
 
+        function stopGame() {
+            scoreEl.innerHTML = score
+            endScoreEl.innerHTML = score
+            createSound('sounds/lose.mp3')
+            modalEl.style.display = 'flex'
+            bodyEl.style.cursor = 'auto'
+            cancelAnimationFrame(animationId)
+        }
+    }
+    var bgSound = createSound('sounds/tinhtam.mp3', false)
     startGameBtn.addEventListener('click', () => {
+        bgSound.play()
+        createSound('sounds/start.mp3')
         init()
         animate()
-        spwanBall()
+        spwanCoin()
+        spwanShitCoin()
+        bodyEl.style.cursor = 'none'
         modalEl.style.display = 'none'
         score = 0
         scoreEl.innerHTML = 0
-        //turn on music
-        musicEl.volume = 0.2;
-        musicEl.play()
     })
 </script>
